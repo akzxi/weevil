@@ -10,7 +10,7 @@ Repo is empty (`main`, no commits). This milestone builds the foundation and the
 |---|---|
 | Platform | Web app in browser, desktop-first, mobile works (tap, responsive panel) |
 | Sprite tech | Code-driven **vector SVG rig** (parts + named sockets), animated with Motion — scales to non-pixel logos, items attach to sockets and follow every animation |
-| Scene | Free roam across full screen |
+| Scene | Free roam across full screen; sprites can be dragged & dropped like Miis |
 | Select view | Dim + blur backdrop **and** character-select panel |
 | Panel content | Name · company · model; stat bars (Reasoning, Code, Speed, Context, Cost); equipped-item slots |
 | Items | 4 slots (2 Skill, 2 MCP) + 1 visual demo item rendered on a socket. Schema has visual + (future) capability halves |
@@ -47,6 +47,7 @@ weevil/
 
 ### Behavior
 - **Wander**: pick random target in viewport bounds → walk at speed (facing flips by direction) → idle pause → repeat. Resize-aware. Pure function `step(state, dt, bounds, rng)` → unit-tested with seeded RNG.
+- **Drag & drop (Mii-style)**: pointer down + move > 6px = drag (else it's a click/select). While held: sprite follows pointer (offset from grab point), wander paused, "held" animation (dangle sway + leg kicks, worried eyes). On release: clamp into bounds, "land" squash-and-stretch, short idle, then wander resumes from the drop point. Pointer events (mouse + touch, `touch-action: none`), pointer capture. Pure state transitions (`grab`/`moveHeld`/`release`) live in `wander.ts` and are unit-tested.
 - **Select**: sprite is a `<button>` (click/tap/Enter). Wander pauses; Motion `layoutId` shared transition moves Clawd from its world position to center at ~3.5× scale; backdrop dims + `backdrop-blur`; panel slides in (right side ≥md, bottom sheet on mobile) with staggered stat-bar fills; Clawd plays "selected" animation (hop + happy eyes).
 - **Speech bubble**: pops (spring) at top-right of zoomed Clawd; focusable button, no-op, tooltip "Chat — coming soon". Hook point for M2.
 - **Exit**: Esc, backdrop click, close button → reverse transition, wander resumes from new position.
