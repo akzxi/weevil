@@ -69,10 +69,11 @@ export function createWanderState(spawn: Point, b: Bounds, c: WanderConfig): Wan
 }
 
 export function step(s: WanderState, dt: number, b: Bounds, c: WanderConfig, rng: Rng): WanderState {
-  if (s.mode === 'held') return s
   const cur = clampInto(s, b, c)
 
   switch (cur.mode) {
+    case 'held':
+      return s
     case 'land':
     case 'idle': {
       const timer = cur.timer - dt
