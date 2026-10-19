@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+.vite/
+test-results/
+playwright-report/
+blob-report/
+.superpowers/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+# Python (apps/api, M2)
+__pycache__/
+.venv/
