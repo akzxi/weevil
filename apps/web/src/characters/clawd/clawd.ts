@@ -5,13 +5,15 @@ const W = 24
 const H = 16
 
 type Eyes = 'open' | 'blink' | 'wide' | 'happy'
-/** straight: legs under the body; short: one pixel shorter (walk glide); splay: outer legs out, inner in; up: pulled up (kicking). */
-type Legs = 'straight' | 'short' | 'splay' | 'up'
+/** straight: legs under the body; splay: outer legs out, inner in; up: pulled up (kicking). */
+type Legs = 'straight' | 'splay' | 'up'
 
 /** Draw one Clawd frame on a 24×16 grid. o = body, s = shade, k = ink. */
-function draw({ eyes = 'open', legs = 'straight', armsUp = false, squash = false }: {
+function draw({ eyes = 'open', legs = 'straight', liftLeg, armsUp = false, squash = false }: {
   eyes?: Eyes
   legs?: Legs
+  /** Index (0–3, left to right) of one leg drawn a pixel shorter, for the walk ripple. */
+  liftLeg?: number
   armsUp?: boolean
   squash?: boolean
 }): string[] {
@@ -43,8 +45,8 @@ function draw({ eyes = 'open', legs = 'straight', armsUp = false, squash = false
 
   const legH = H - base
   const legXs = legs === 'splay' ? [3, 8, 14, 19] : [5, 8, 14, 17]
-  const h = legs === 'up' ? Math.max(1, legH - 2) : legs === 'short' ? legH - 1 : legH
-  for (const lx of legXs) rect(lx, base, 2, h, 's')
+  const h = legs === 'up' ? Math.max(1, legH - 2) : legH
+  legXs.forEach((lx, i) => rect(lx, base, 2, i === liftLeg ? h - 1 : h, 's'))
 
   return g.map((row) => row.join(''))
 }
@@ -60,7 +62,8 @@ export const clawd: CharacterDef = {
     palette: { o: '#D97757', s: '#B9603F', k: '#1F1E1D' },
     frames: {
       idle: [f(2600, {}), f(140, { eyes: 'blink' })],
-      walk: [f(0, { legs: 'straight' }), f(0, { legs: 'short' })],
+      // One leg lifts per hop, rippling across all four.
+      walk: [0, 1, 2, 3].map((liftLeg) => f(0, { liftLeg })),
       held: [f(110, { eyes: 'wide', legs: 'up' }), f(110, { eyes: 'wide', legs: 'splay' })],
       land: [f(450, { squash: true, legs: 'splay' })],
       selected: [f(420, { eyes: 'happy' }), f(420, { eyes: 'happy', armsUp: true, legs: 'splay' })],
