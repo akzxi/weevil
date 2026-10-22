@@ -6,7 +6,8 @@ services:
       POSTGRES_PASSWORD: weevil
       POSTGRES_DB: weevil
     ports:
-      - "5432:5432"
+      # Localhost only: the dev password must never be reachable from the network.
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       # Creates the weevil_test database on first start.
