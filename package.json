@@ -1,13 +1,20 @@
 {
   "name": "weevil",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev": "npm run dev -w apps/web",
     "build": "npm run build -w apps/web",
     "typecheck": "npm run typecheck -w apps/web",
     "lint": "npm run lint -w apps/web",
     "test": "npm run test -w apps/web",
-    "e2e": "npm run e2e -w apps/web"
+    "e2e": "npm run e2e -w apps/web",
+    "db:up": "docker compose up -d --wait",
+    "db:migrate": "cd apps/api && uv run alembic upgrade head",
+    "dev:api": "cd apps/api && uv run uvicorn weevil_api.main:app --reload --port 8000",
+    "test:api": "cd apps/api && uv run pytest -q",
+    "lint:api": "cd apps/api && uv run ruff check . && uv run ruff format --check ."
   }
 }
