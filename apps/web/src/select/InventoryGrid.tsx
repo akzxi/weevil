@@ -35,7 +35,7 @@ export function InventoryGrid({ characterId, kind }: { characterId: string; kind
               drag={item && { itemId: item.id, source: 'grid', characterId }}
               onActivate={() => item && wear(characterId, item.id)}
               onRemove={() => item && unequip(characterId, item.id)}
-              onEmptyClick={() => setShopOpen(true)}
+              onEmptyClick={() => setShopOpen(true, kind)}
               emptyLabel={`Empty ${label} slot. Open the shop to add one.`}
               activateHint={`Enter to wear it on its ${item?.socket} slot.`}
             />

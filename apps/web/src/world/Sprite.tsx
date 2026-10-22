@@ -140,7 +140,7 @@ export function Sprite({ character, registry, selected, onSelect }: SpriteProps)
         className="focus-ring absolute -inset-2 rounded-2xl opacity-0 ring-2 ring-accent transition-opacity"
       />
       {!selected && (
-        <motion.div layoutId={`sprite-${character.id}`} className="absolute inset-0" transition={{ type: 'spring', stiffness: 260, damping: 26 }}>
+        <motion.div layoutId={`sprite-${character.id}`} layoutCrossfade={false} className="absolute inset-0" transition={{ type: 'spring', stiffness: 260, damping: 26 }}>
           <motion.div
             className="size-full"
             animate={{ y: held ? -18 : 0 }}

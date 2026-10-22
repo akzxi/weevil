@@ -7,7 +7,7 @@ import { SelectPanel } from './SelectPanel'
 describe('SelectPanel', () => {
   it('shows name, company and model', () => {
     render(<SelectPanel character={clawd} onClose={() => {}} />)
-    expect(screen.getByRole('heading', { name: 'Clawd' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Claude' })).toBeInTheDocument()
     expect(screen.getByText('Anthropic')).toBeInTheDocument()
     expect(screen.getByText('Claude Opus 5.5')).toBeInTheDocument()
   })

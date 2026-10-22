@@ -55,7 +55,7 @@ const f = (ms: number, opts: Parameters<typeof draw>[0]): SpriteFrame => ({ ms, 
 
 export const clawd: CharacterDef = {
   id: 'clawd',
-  name: 'Clawd',
+  name: 'Claude',
   company: 'Anthropic',
   model: 'Claude Opus 5.5',
   sprite: {

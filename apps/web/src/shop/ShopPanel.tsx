@@ -1,15 +1,15 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { characters, getCharacter } from '../characters/registry'
+import { getCharacter } from '../characters/registry'
 import { dragSource } from '../drag/drag'
 import { catalog } from '../items/catalog'
 import type { ItemKind } from '../items/types'
 import { PixelIcon } from '../pixel/PixelArt'
 import { loadoutOf, useWeevil } from '../state/store'
 
-const GROUPS: { kind: ItemKind; title: string }[] = [
+const TABS: { kind: ItemKind; title: string }[] = [
   { kind: 'skill', title: 'Skills' },
-  { kind: 'mcp', title: 'MCP servers' },
+  { kind: 'mcp', title: 'MCPs' },
 ]
 
 export function ShopPanel() {
@@ -23,19 +23,20 @@ export function ShopPanel() {
 function Shop({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
-  // shortcut: keyboard "Equip" targets the selected character, else the first one; add a picker once there are several.
-  const targetId = useWeevil((s) => s.selectedId) ?? characters[0].id
-  const target = getCharacter(targetId)!
-  const loadout = useWeevil((s) => loadoutOf(s.loadouts, targetId))
+  const tab = useWeevil((s) => s.shopTab)
+  const setShopTab = useWeevil((s) => s.setShopTab)
+  // Equip buttons only make sense for a specific character, so they appear only on the select screen.
+  const target = getCharacter(useWeevil((s) => s.selectedId) ?? '')
+  const loadout = useWeevil((s) => (target ? loadoutOf(s.loadouts, target.id) : undefined))
   const equip = useWeevil((s) => s.equip)
   // The shop is still fading out when a drag starts from it; don't let it swallow the drop.
   const passThrough = useWeevil((s) => s.drag) ? ' pointer-events-none' : ''
 
-  const owned = new Set([...loadout.skills, ...loadout.mcps, ...Object.values(loadout.worn)])
+  const owned = new Set(loadout ? [...loadout.skills, ...loadout.mcps, ...Object.values(loadout.worn)] : [])
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return catalog.filter((i) => !q || `${i.name} ${i.description} ${i.id}`.toLowerCase().includes(q))
-  }, [query])
+    return catalog.filter((i) => i.kind === tab && (!q || `${i.name} ${i.description} ${i.id}`.toLowerCase().includes(q)))
+  }, [query, tab])
 
   useEffect(() => {
     const returnTo = document.activeElement as HTMLElement | null
@@ -76,7 +77,9 @@ function Shop({ onClose }: { onClose: () => void }) {
         <header className="flex items-start justify-between gap-3">
           <div>
             <h2 className="font-pixel text-2xl text-inv-ink">Shop</h2>
-            <p className="text-sm text-inv-ink/75">Drag an item onto a character to equip it.</p>
+            <p className="text-sm text-inv-ink/75">
+              {target ? `Drag onto ${target.name}, or use Equip.` : 'Drag an item onto a character to equip it.'}
+            </p>
           </div>
           <button
             type="button"
@@ -90,62 +93,69 @@ function Shop({ onClose }: { onClose: () => void }) {
           </button>
         </header>
 
+        <div className="mt-3 flex gap-2" role="group" aria-label="Item type">
+          {TABS.map(({ kind, title }) => (
+            <button
+              key={kind}
+              type="button"
+              aria-pressed={tab === kind}
+              onClick={() => setShopTab(kind)}
+              className={`mc-button flex-1 py-1.5 font-pixel text-base ${tab === kind ? 'brightness-110' : 'opacity-70'}`}
+            >
+              {title}
+            </button>
+          ))}
+        </div>
+
         <label className="mt-3 block">
-          <span className="sr-only">Search skills and MCP servers</span>
+          <span className="sr-only">Search {tab === 'skill' ? 'skills' : 'MCP servers'}</span>
           <input
             ref={searchRef}
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search skills and MCPs"
+            placeholder={tab === 'skill' ? 'Search skills' : 'Search MCP servers'}
             className="mc-slot w-full px-3 py-2 text-sm text-white placeholder:text-white/60 focus-visible:outline-2 focus-visible:outline-accent"
           />
         </label>
 
-        <div className="-mx-1 mt-3 flex-1 overflow-y-auto px-1" data-testid="shop-list">
-          {GROUPS.map(({ kind, title }) => {
-            const items = results.filter((i) => i.kind === kind)
-            if (!items.length) return null
+        <ul className="-mx-1 mt-3 flex flex-1 flex-col gap-1.5 overflow-y-auto px-1" data-testid="shop-list">
+          {results.map((item) => {
+            const has = owned.has(item.id)
             return (
-              <section key={kind} className="mb-4">
-                <h3 className="mb-1.5 font-pixel text-base text-inv-ink">{title}</h3>
-                <ul className="flex flex-col gap-1.5">
-                  {items.map((item) => {
-                    const has = owned.has(item.id)
-                    return (
-                      <li
-                        key={item.id}
-                        data-testid="shop-item"
-                        data-item={item.id}
-                        className="flex cursor-grab touch-pan-y items-center gap-3 p-1.5 hover:bg-white/20"
-                        onPointerDown={dragSource(() => ({ itemId: item.id, source: 'shop' }), onClose)}
-                      >
-                        <div className="mc-slot grid size-11 shrink-0 place-items-center">
-                          <PixelIcon art={item.icon} className="size-8" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium text-inv-ink">{item.name}</div>
-                          <div className="truncate text-xs text-inv-ink/75">{item.description}</div>
-                        </div>
-                        <button
-                          type="button"
-                          disabled={has}
-                          aria-label={has ? `${item.name} is equipped on ${target.name}` : `Equip ${item.name} on ${target.name}`}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={() => equip(targetId, item.id)}
-                          className="mc-button shrink-0 px-2.5 py-1 text-xs disabled:opacity-60"
-                        >
-                          {has ? 'Equipped' : 'Equip'}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </section>
+              <li
+                key={item.id}
+                data-testid="shop-item"
+                data-item={item.id}
+                className="flex cursor-grab touch-pan-y items-center gap-3 p-1.5 hover:bg-white/20"
+                onPointerDown={dragSource(() => ({ itemId: item.id, source: 'shop' }), onClose)}
+              >
+                <div className="mc-slot grid size-11 shrink-0 place-items-center">
+                  <PixelIcon art={item.icon} className="size-8" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-inv-ink">{item.name}</div>
+                  <div className="truncate text-xs text-inv-ink/75">{item.description}</div>
+                </div>
+                {target && (
+                  <button
+                    type="button"
+                    disabled={has}
+                    aria-label={has ? `${item.name} is equipped on ${target.name}` : `Equip ${item.name} on ${target.name}`}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={() => equip(target.id, item.id)}
+                    className="mc-button shrink-0 px-2.5 py-1 text-xs disabled:opacity-60"
+                  >
+                    {has ? 'Equipped' : 'Equip'}
+                  </button>
+                )}
+              </li>
             )
           })}
-          {!results.length && <p className="py-6 text-center text-sm text-inv-ink">Nothing matches "{query}". Try a shorter search.</p>}
-        </div>
+          {!results.length && (
+            <li className="py-6 text-center text-sm text-inv-ink">Nothing matches "{query}". Try a shorter search.</li>
+          )}
+        </ul>
       </motion.aside>
     </>
   )

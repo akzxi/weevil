@@ -5,6 +5,8 @@ import { useWeevil } from '../state/store'
 import { applyDrop, pointer } from './drag'
 
 const GHOST = 48
+/** Holding a dragged item this close to the top/bottom edge scrolls the screen under it. */
+const EDGE = 64
 
 /** The item under the pointer while dragging. Follows the pointer via a ref, like useWanderLoop. */
 export function DragLayer() {
@@ -41,12 +43,22 @@ export function DragLayer() {
       highlight(null)
       setDrag(null)
     }
+    // Auto-scroll so items can travel between parts of a scrolled screen (e.g. grid → worn slot on phones).
+    let raf = requestAnimationFrame(function scroll() {
+      const dy = pointer.y < EDGE ? -10 : pointer.y > window.innerHeight - EDGE ? 10 : 0
+      if (dy) {
+        document.elementFromPoint(pointer.x, pointer.y)?.closest('[data-autoscroll]')?.scrollBy(0, dy)
+        place()
+      }
+      raf = requestAnimationFrame(scroll)
+    })
     place()
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', end)
     window.addEventListener('pointercancel', end)
     window.addEventListener('keydown', key, true)
     return () => {
+      cancelAnimationFrame(raf)
       highlight(null)
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', end)

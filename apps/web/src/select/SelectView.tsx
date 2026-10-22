@@ -68,6 +68,7 @@ export function SelectView({ character, onClose }: SelectViewProps) {
         aria-modal="true"
         aria-labelledby={headingId}
         data-testid="select-dialog"
+        data-autoscroll
         className="fixed inset-0 z-30 overflow-y-auto px-4 pt-24 pb-6 md:grid md:place-items-center md:py-10"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
@@ -83,6 +84,9 @@ export function SelectView({ character, onClose }: SelectViewProps) {
             </motion.div>
             <motion.div
               layoutId={`sprite-${character.id}`}
+              layoutCrossfade={false}
+              // On close, hand straight over to the world sprite, which flies back alone: no ghost, no lingering cheer.
+              exit={{ opacity: 0, transition: { duration: 0 } }}
               data-drop="character"
               data-character={character.id}
               className="relative aspect-[3/2] w-[168px] md:w-[300px]"

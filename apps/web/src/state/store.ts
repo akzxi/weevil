@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { characters, getCharacter } from '../characters/registry'
 import { getItem } from '../items/registry'
+import type { ItemKind } from '../items/types'
 import * as inv from './inventory'
 
 /** An item being dragged. Pointer position is deliberately not stored (see DragLayer). */
@@ -18,7 +19,10 @@ interface WeevilState {
   deselect: () => void
 
   shopOpen: boolean
-  setShopOpen: (open: boolean) => void
+  /** Open or close the shop, optionally switching to a tab. */
+  setShopOpen: (open: boolean, tab?: ItemKind) => void
+  shopTab: ItemKind
+  setShopTab: (tab: ItemKind) => void
 
   drag: DragInfo | null
   setDrag: (drag: DragInfo | null) => void
@@ -60,7 +64,9 @@ export const useWeevil = create<WeevilState>()(
         deselect: () => set({ selectedId: null }),
 
         shopOpen: false,
-        setShopOpen: (shopOpen) => set({ shopOpen }),
+        setShopOpen: (shopOpen, tab) => set(tab ? { shopOpen, shopTab: tab } : { shopOpen }),
+        shopTab: 'skill',
+        setShopTab: (shopTab) => set({ shopTab }),
 
         drag: null,
         setDrag: (drag) => set({ drag }),
