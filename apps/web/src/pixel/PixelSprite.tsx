@@ -4,7 +4,7 @@ import type { ItemDef, Socket } from '../items/types'
 import type { WanderMode } from '../world/wander'
 import { PixelRects } from './PixelArt'
 
-export type SpriteMode = WanderMode | 'selected'
+export type SpriteMode = WanderMode | 'selected' | 'talk'
 
 export interface SpriteFrame {
   rows: string[]

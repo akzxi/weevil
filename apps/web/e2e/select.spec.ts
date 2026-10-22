@@ -26,7 +26,7 @@ test('selecting Claude opens the character select view', async ({ page }) => {
   const dialog = page.getByRole('dialog', { name: 'Claude' })
   await expect(dialog).toBeVisible()
   await expect(dialog.getByText('Anthropic')).toBeVisible()
-  await expect(dialog.getByText('Claude Opus 5.5')).toBeVisible()
+  await expect(dialog.getByText('Claude Haiku 5.5')).toBeVisible()
   await expect(dialog.getByRole('meter')).toHaveCount(5)
   await expect(dialog.getByTestId('worn-head').locator('[data-item="frontend-design"]')).toBeVisible()
   await expect(dialog.getByTestId('grid-skill').locator('.mc-slot')).toHaveCount(12)

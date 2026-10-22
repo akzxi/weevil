@@ -21,6 +21,8 @@ export function SelectView({ character, onClose }: SelectViewProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const headingId = useId()
   const worn = useWeevil((s) => loadoutOf(s.loadouts, character.id).worn)
+  // The chat screen covers this view; keep it out of reach of focus and screen readers meanwhile.
+  const covered = useWeevil((s) => s.chatId !== null)
   const items = useMemo(() => wornItems({ skills: [], mcps: [], worn }), [worn])
 
   // Focus into the dialog, trap Tab, close on Escape, restore focus on exit.
@@ -30,7 +32,8 @@ export function SelectView({ character, onClose }: SelectViewProps) {
     dialogRef.current?.querySelector<HTMLElement>('[aria-label^="Close"]')?.focus()
 
     const onKey = (e: KeyboardEvent) => {
-      if (useWeevil.getState().shopOpen) return
+      const { shopOpen, chatId } = useWeevil.getState()
+      if (shopOpen || chatId) return
       if (e.key === 'Escape') return onClose()
       if (e.key !== 'Tab' || !dialogRef.current) return
       const nodes = [...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)]
@@ -68,6 +71,7 @@ export function SelectView({ character, onClose }: SelectViewProps) {
         aria-modal="true"
         aria-labelledby={headingId}
         data-testid="select-dialog"
+        inert={covered}
         data-autoscroll
         className="fixed inset-0 z-30 overflow-y-auto px-4 pt-24 pb-6 md:grid md:place-items-center md:py-10"
         onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -93,7 +97,7 @@ export function SelectView({ character, onClose }: SelectViewProps) {
               transition={{ type: 'spring', stiffness: 260, damping: 26 }}
             >
               <PixelSprite sprite={character.sprite} mode="selected" worn={items} className="size-full" />
-              <ThoughtBubble name={character.name} />
+              <ThoughtBubble characterId={character.id} name={character.name} />
             </motion.div>
           </div>
 

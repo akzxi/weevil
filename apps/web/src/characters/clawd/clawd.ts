@@ -57,7 +57,7 @@ export const clawd: CharacterDef = {
   id: 'clawd',
   name: 'Claude',
   company: 'Anthropic',
-  model: 'Claude Opus 5.5',
+  model: 'Claude Haiku 5.5',
   sprite: {
     palette: { o: '#D97757', s: '#B9603F', k: '#1F1E1D' },
     frames: {
@@ -67,6 +67,7 @@ export const clawd: CharacterDef = {
       held: [f(110, { eyes: 'wide', legs: 'up' }), f(110, { eyes: 'wide', legs: 'splay' })],
       land: [f(450, { squash: true, legs: 'splay' })],
       selected: [f(420, { eyes: 'happy' }), f(420, { eyes: 'happy', armsUp: true, legs: 'splay' })],
+      talk: [f(200, {}), f(200, { eyes: 'happy' })],
     },
     sockets: {
       head: { x: 8, y: -5 },

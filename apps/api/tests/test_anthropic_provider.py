@@ -1,3 +1,4 @@
+from dataclasses import replace
 from types import SimpleNamespace as NS
 
 import anthropic
@@ -93,20 +94,27 @@ async def test_streams_thinking_and_text_then_done_with_exact_blocks():
     assert done.stop_reason == "end_turn"
 
 
-async def test_request_uses_character_config_adaptive_thinking_fallbacks_and_caching():
+async def test_request_uses_character_config_adaptive_thinking_and_caching():
     client = FakeClient(FakeStream([], final_message([{"type": "text", "text": "ok"}])))
     history = [{"role": "user", "content": "hello"}]
     await collect(AnthropicProvider(client), history)
 
     call = client.calls[0]
-    assert call["model"] == "claude-opus-5-5"
+    assert call["model"] == CLAWD.model
     assert call["thinking"] == {"type": "adaptive", "display": "summarized"}
     assert call["output_config"] == {"effort": CLAWD.effort}
-    assert call["fallbacks"] == "default"
-    assert call["betas"] == ["server-side-fallback-2026-07-01"]
     assert call["cache_control"] == {"type": "ephemeral"}
     assert call["system"] == CLAWD.system
     assert call["messages"] == history
+    assert "fallbacks" not in call and "betas" not in call  # Haiku: no server-side fallbacks
+
+
+async def test_fallbacks_are_requested_when_the_character_enables_them():
+    client = FakeClient(FakeStream([], final_message([{"type": "text", "text": "ok"}])))
+    opus = replace(CLAWD, model="claude-opus-5-5", fallbacks=True)
+    _ = [e async for e in AnthropicProvider(client).stream(opus, [{"role": "user", "content": "x"}])]
+    assert client.calls[0]["fallbacks"] == "default"
+    assert client.calls[0]["betas"] == ["server-side-fallback-2026-07-01"]
 
 
 async def test_refusal_discards_partial_output():

@@ -1,4 +1,5 @@
 import { AnimatePresence, MotionConfig } from 'motion/react'
+import { lazy, Suspense } from 'react'
 import { getCharacter } from './characters/registry'
 import { DragLayer } from './drag/DragLayer'
 import { SelectView } from './select/SelectView'
@@ -8,10 +9,14 @@ import { useWeevil } from './state/store'
 import { ThemeToggle } from './theme/ThemeToggle'
 import { World } from './world/World'
 
+// Loaded on first use: markdown rendering is most of the chat's weight.
+const ChatScreen = lazy(() => import('./chat/ChatScreen').then((m) => ({ default: m.ChatScreen })))
+
 export default function App() {
   const selectedId = useWeevil((s) => s.selectedId)
   const deselect = useWeevil((s) => s.deselect)
   const selected = selectedId ? getCharacter(selectedId) : undefined
+  const chatCharacter = getCharacter(useWeevil((s) => s.chatId) ?? '')
 
   return (
     <MotionConfig reducedMotion="user">
@@ -23,7 +28,7 @@ export default function App() {
 
         {/* Above the select overlay so the shop and theme stay reachable from both screens. */}
         <div className="fixed top-5 right-5 z-40 flex items-center gap-3 md:top-7 md:right-7">
-          <ShopButton />
+          {!chatCharacter && <ShopButton />}
           <ThemeToggle />
         </div>
 
@@ -36,6 +41,11 @@ export default function App() {
         <AnimatePresence>
           {selected && <SelectView key={selected.id} character={selected} onClose={deselect} />}
         </AnimatePresence>
+        <Suspense fallback={null}>
+          <AnimatePresence>
+            {chatCharacter && <ChatScreen key={chatCharacter.id} character={chatCharacter} />}
+          </AnimatePresence>
+        </Suspense>
         <ShopPanel />
         <DragLayer />
       </main>

@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
 import { PixelIcon, type PixelArt } from '../pixel/PixelArt'
+import { useWeevil } from '../state/store'
 
 // k = outline (theme ink), w = fill (theme panel); CSS vars keep the cloud right in both themes.
 const palette = { k: 'var(--ink)', w: 'var(--bubble)' }
@@ -24,13 +25,15 @@ const puff = (size: 2 | 3): PixelArt => ({
   rows: size === 3 ? ['.k.', 'kwk', '.k.'] : ['kk', 'kk'],
 })
 
-/** Chat entry point. Does nothing yet; Milestone 2 opens a chat with this character. */
-export function ThoughtBubble({ name }: { name: string }) {
+/** Opens the full-screen chat with this character. */
+export function ThoughtBubble({ characterId, name }: { characterId: string; name: string }) {
+  const openChat = useWeevil((s) => s.openChat)
   return (
     <motion.button
       type="button"
-      aria-label={`Chat with ${name} (coming soon)`}
-      title="Chat — coming soon"
+      aria-label={`Chat with ${name}`}
+      title={`Chat with ${name}`}
+      onClick={() => openChat(characterId)}
       className="absolute -top-16 -right-10 cursor-pointer focus-visible:outline-none md:-top-20 md:-right-12 [&:focus-visible_.cloud]:outline-2 [&:focus-visible_.cloud]:outline-offset-2 [&:focus-visible_.cloud]:outline-accent"
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}

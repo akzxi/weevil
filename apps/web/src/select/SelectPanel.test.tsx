@@ -9,7 +9,7 @@ describe('SelectPanel', () => {
     render(<SelectPanel character={clawd} onClose={() => {}} />)
     expect(screen.getByRole('heading', { name: 'Claude' })).toBeInTheDocument()
     expect(screen.getByText('Anthropic')).toBeInTheDocument()
-    expect(screen.getByText('Claude Opus 5.5')).toBeInTheDocument()
+    expect(screen.getByText('Claude Haiku 5.5')).toBeInTheDocument()
   })
 
   it('shows a meter for each of the five stats', () => {

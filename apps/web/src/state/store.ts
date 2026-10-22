@@ -18,6 +18,11 @@ interface WeevilState {
   select: (id: string) => void
   deselect: () => void
 
+  /** Character whose full-screen chat is open, if any. */
+  chatId: string | null
+  openChat: (characterId: string) => void
+  closeChat: () => void
+
   shopOpen: boolean
   /** Open or close the shop, optionally switching to a tab. */
   setShopOpen: (open: boolean, tab?: ItemKind) => void
@@ -62,6 +67,10 @@ export const useWeevil = create<WeevilState>()(
         selectedId: null,
         select: (id) => set({ selectedId: id }),
         deselect: () => set({ selectedId: null }),
+
+        chatId: null,
+        openChat: (chatId) => set({ chatId, shopOpen: false }),
+        closeChat: () => set({ chatId: null }),
 
         shopOpen: false,
         setShopOpen: (shopOpen, tab) => set(tab ? { shopOpen, shopTab: tab } : { shopOpen }),

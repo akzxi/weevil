@@ -5,6 +5,8 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // The FastAPI backend (apps/api); same-origin in dev, so no CORS round-trips.
+  server: { proxy: { '/api': 'http://localhost:8000' } },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

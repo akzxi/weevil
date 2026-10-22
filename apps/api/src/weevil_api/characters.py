@@ -27,11 +27,14 @@ CHARACTERS: dict[str, CharacterConfig] = {
         id="clawd",
         name="Claude",
         provider="anthropic",
-        model="claude-opus-5-5",
+        # Haiku keeps development cheap; switch to claude-opus-5-5 for the full experience.
+        model="claude-haiku-5-5",
         system=(
             "You are Claude, made by Anthropic. You're chatting inside weevil, a small pixel-art world where "
             "AI models wander around as characters; the user picked you from the character-select screen. "
             "Be helpful, warm and direct, and use Markdown when it makes an answer easier to read."
         ),
+        # Server-side refusal fallbacks aren't available for Haiku 5.5; turn on with Opus or Sonnet.
+        fallbacks=False,
     ),
 }
