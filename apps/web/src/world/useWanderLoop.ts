@@ -7,9 +7,9 @@ export interface SpriteEntry {
   state: WanderState
   config: WanderConfig
   paused: boolean
-  /** Last mode/facing reported to React, so it only re-renders on change. */
-  reported: { mode: WanderMode; facing: Facing }
-  onChange: (mode: WanderMode, facing: Facing) => void
+  /** Last mode/facing/step reported to React, so it only re-renders on change. */
+  reported: { mode: WanderMode; facing: Facing; step: number }
+  onChange: (mode: WanderMode, facing: Facing, step: number) => void
 }
 
 export type SpriteRegistry = Map<string, SpriteEntry>
@@ -17,13 +17,14 @@ export type SpriteRegistry = Map<string, SpriteEntry>
 export const viewportBounds = (): Bounds => ({ width: window.innerWidth, height: window.innerHeight })
 
 export function applyEntry(entry: SpriteEntry) {
-  const { x, y, mode, facing } = entry.state
+  const { x, y, mode, facing, step } = entry.state
   entry.el.style.transform = `translate3d(${x}px, ${y}px, 0)`
   // Lower on screen draws in front; held sprites float above everything.
   entry.el.style.zIndex = mode === 'held' ? '10' : '1'
-  if (mode !== entry.reported.mode || facing !== entry.reported.facing) {
-    entry.reported = { mode, facing }
-    entry.onChange(mode, facing)
+  const r = entry.reported
+  if (mode !== r.mode || facing !== r.facing || step !== r.step) {
+    entry.reported = { mode, facing, step }
+    entry.onChange(mode, facing, step)
   }
 }
 

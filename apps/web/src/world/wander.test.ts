@@ -13,7 +13,8 @@ import {
 const bounds = { width: 1000, height: 800 }
 const config: WanderConfig = {
   size: { width: 100, height: 80 },
-  speed: 100,
+  stepSize: 10,
+  stepRate: 5,
   idle: [1, 2],
   landDuration: 0.4,
   canWalk: true,
@@ -45,18 +46,26 @@ describe('step', () => {
     expect(walking.facing).toBe(-1)
   })
 
-  it('moves toward the target at configured speed and faces the direction of travel', () => {
+  it('marches in whole steps: hops stepSize at once, then waits for the next beat', () => {
     const s = { ...createWanderState({ x: 0, y: 0 }, bounds, config), mode: 'walk' as const, target: { x: 500, y: 0 } }
-    const next = step(s, 1, bounds, config, seq(0))
-    expect(next.x).toBeCloseTo(100)
-    expect(next.y).toBeCloseTo(0)
-    expect(next.facing).toBe(1)
+    const first = step(s, 0.01, bounds, config, seq(0))
+    expect(first).toMatchObject({ x: 10, y: 0, step: 1, facing: 1 })
+    const waiting = step(first, 0.1, bounds, config, seq(0))
+    expect(waiting).toMatchObject({ x: 10, step: 1 })
+    const second = step(waiting, 0.1, bounds, config, seq(0))
+    expect(second).toMatchObject({ x: 20, step: 2 })
   })
 
-  it('arrives exactly on the target and starts idling for a random duration', () => {
-    const s = { ...createWanderState({ x: 0, y: 0 }, bounds, config), mode: 'walk' as const, target: { x: 50, y: 0 } }
-    const next = step(s, 1, bounds, config, seq(0.5))
-    expect(next).toMatchObject({ x: 50, y: 0, mode: 'idle', target: null, timer: 1.5 })
+  it('snaps hops to whole pixels', () => {
+    const s = { ...createWanderState({ x: 0, y: 0 }, bounds, config), mode: 'walk' as const, target: { x: 300, y: 400 } }
+    const next = step(s, 0.01, bounds, config, seq(0))
+    expect(next).toMatchObject({ x: 6, y: 8 })
+  })
+
+  it('arrives exactly on the target without overshooting, then idles for a random duration', () => {
+    const s = { ...createWanderState({ x: 0, y: 0 }, bounds, config), mode: 'walk' as const, target: { x: 5, y: 0 } }
+    const next = step(s, 0.01, bounds, config, seq(0.5))
+    expect(next).toMatchObject({ x: 5, y: 0, mode: 'idle', target: null, timer: 1.5, step: 1 })
   })
 
   it('never walks when canWalk is false (reduced motion)', () => {

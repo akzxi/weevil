@@ -1,45 +1,77 @@
-import type { PartDef } from '../../rig/types'
+import type { SpriteFrame } from '../../pixel/PixelSprite'
 import type { CharacterDef } from '../types'
-import { ArmLeft, ArmRight, Body, CLAWD_PALETTE, EyeLeft, EyeRight, Legs } from './ClawdParts'
 
-const legPivotX = [30, 44, 76, 90]
+const W = 24
+const H = 16
 
-const legs: PartDef[] = Legs.map((Art, i) => ({
-  id: `leg_${i + 1}`,
-  role: 'leg',
-  layer: 0,
-  pivot: { x: legPivotX[i], y: 62 },
-  // Outer and inner pairs swing opposite each other.
-  phase: i === 1 || i === 2 ? 1 : 0,
-  Art,
-}))
+type Eyes = 'open' | 'blink' | 'wide' | 'happy'
+/** straight: legs under the body; splay: outer legs out, inner in; up: legs pulled up (kicking). */
+type Legs = 'straight' | 'splay' | 'up'
+
+/** Draw one Clawd frame on a 24×16 grid. o = body, s = shade, k = ink. */
+function draw({ eyes = 'open', legs = 'straight', armsUp = false, squash = false }: {
+  eyes?: Eyes
+  legs?: Legs
+  armsUp?: boolean
+  squash?: boolean
+}): string[] {
+  const g = Array.from({ length: H }, () => Array<string>(W).fill('.'))
+  const rect = (x: number, y: number, w: number, h: number, c: string) => {
+    for (let r = y; r < y + h; r++) for (let col = x; col < x + w; col++) g[r][col] = c
+  }
+
+  const top = squash ? 5 : 2
+  const bodyH = squash ? 9 : 10
+  const base = top + bodyH
+  rect(3, top, 18, bodyH, 'o')
+  rect(3, base - 1, 18, 1, 's')
+
+  const armY = armsUp ? top - 1 : top + 3
+  rect(0, armY, 3, 3, 'o')
+  rect(21, armY, 3, 3, 'o')
+
+  for (const ex of [7, 15]) {
+    if (eyes === 'open') rect(ex, top + 2, 2, 4, 'k')
+    if (eyes === 'blink') rect(ex, top + 4, 2, 1, 'k')
+    if (eyes === 'wide') rect(ex - 1, top + 1, 3, 5, 'k')
+    if (eyes === 'happy') {
+      rect(ex - 1, top + 4, 1, 1, 'k')
+      rect(ex, top + 3, 2, 1, 'k')
+      rect(ex + 2, top + 4, 1, 1, 'k')
+    }
+  }
+
+  const legH = H - base
+  const legXs = legs === 'splay' ? [3, 8, 14, 19] : [5, 8, 14, 17]
+  for (const lx of legXs) rect(lx, base, 2, legs === 'up' ? Math.max(1, legH - 2) : legH, 's')
+
+  return g.map((row) => row.join(''))
+}
+
+const f = (ms: number, opts: Parameters<typeof draw>[0]): SpriteFrame => ({ ms, rows: draw(opts) })
 
 export const clawd: CharacterDef = {
   id: 'clawd',
   name: 'Clawd',
   company: 'Anthropic',
   model: 'Claude Opus 5.5',
-  palette: { primary: CLAWD_PALETTE.primary, ink: CLAWD_PALETTE.ink },
-  rig: {
-    viewBox: { width: 120, height: 90 },
-    parts: [
-      ...legs,
-      { id: 'body', role: 'body', layer: 1, pivot: { x: 60, y: 68 }, Art: Body },
-      { id: 'arm_l', role: 'arm', parent: 'body', layer: 0, pivot: { x: 19, y: 42 }, phase: 0, Art: ArmLeft },
-      { id: 'arm_r', role: 'arm', parent: 'body', layer: 0, pivot: { x: 101, y: 42 }, phase: 1, Art: ArmRight },
-      { id: 'eye_l', role: 'eye', parent: 'body', layer: 1, pivot: { x: 44, y: 37 }, Art: EyeLeft },
-      { id: 'eye_r', role: 'eye', parent: 'body', layer: 1, pivot: { x: 76, y: 37 }, Art: EyeRight },
-    ],
+  sprite: {
+    palette: { o: '#D97757', s: '#B9603F', k: '#1F1E1D' },
+    frames: {
+      idle: [f(2600, {}), f(140, { eyes: 'blink' })],
+      walk: [f(0, { legs: 'straight' }), f(0, { legs: 'splay', armsUp: true })],
+      held: [f(110, { eyes: 'wide', legs: 'up' }), f(110, { eyes: 'wide', legs: 'splay' })],
+      land: [f(450, { squash: true, legs: 'splay' })],
+      selected: [f(420, { eyes: 'happy' }), f(420, { eyes: 'happy', armsUp: true, legs: 'splay' })],
+    },
     sockets: {
-      head: { part: 'body', x: 60, y: 18 },
-      hand_l: { part: 'arm_l', x: 8, y: 48 },
-      hand_r: { part: 'arm_r', x: 112, y: 48 },
-      back: { part: 'body', x: 60, y: 40 },
-      aura: { part: 'body', x: 60, y: 45 },
+      head: { x: 8, y: -5 },
+      hand: { x: 18, y: 4 },
+      back: { x: -3, y: 0, behind: true },
+      feet: { x: 8, y: 9 },
     },
   },
   stats: { reasoning: 95, code: 97, speed: 70, context: 88, cost: 75 },
-  slots: [{ kind: 'skill' }, { kind: 'skill' }, { kind: 'mcp' }, { kind: 'mcp' }],
-  equipped: ['wizard-hat', null, null, null],
+  starter: { skills: [], mcps: [], worn: { head: 'frontend-design' } },
   spawn: { x: 0.5, y: 0.62 },
 }

@@ -1,5 +1,4 @@
 import type { CharacterDef, StatKey } from '../characters/types'
-import { ItemSlots } from './ItemSlots'
 import { StatBar } from './StatBar'
 
 const STATS: { key: StatKey; label: string }[] = [
@@ -50,10 +49,6 @@ export function SelectPanel({ character, onClose, headingId }: SelectPanelProps)
         ))}
       </section>
 
-      <section aria-label="Equipped">
-        <h3 className="mb-2.5 text-xs font-semibold tracking-[0.2em] text-ink-muted uppercase">Equipped</h3>
-        <ItemSlots slots={character.slots} equipped={character.equipped} />
-      </section>
     </div>
   )
 }

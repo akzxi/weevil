@@ -1,13 +1,6 @@
+import { catalog } from './catalog'
 import type { ItemDef } from './types'
-import { wizardHat } from './wizardHat'
 
-const items: Record<string, ItemDef> = { [wizardHat.id]: wizardHat }
+const items = new Map(catalog.map((i) => [i.id, i]))
 
-export const getItem = (id: string): ItemDef | undefined => items[id]
-
-/** Resolve a character's equipped ids to item defs, skipping empty slots. */
-export const resolveEquipped = (ids: (string | null)[]) =>
-  ids.flatMap((id) => {
-    const item = id ? getItem(id) : undefined
-    return item ? [item] : []
-  })
+export const getItem = (id: string): ItemDef | undefined => items.get(id)

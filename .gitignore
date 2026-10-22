@@ -14,3 +14,4 @@ blob-report/
 # Python (apps/api, M2)
 __pycache__/
 .venv/
+.playwright-mcp/

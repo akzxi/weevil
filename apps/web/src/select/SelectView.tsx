@@ -1,10 +1,13 @@
 import { motion } from 'motion/react'
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useMemo, useRef } from 'react'
 import type { CharacterDef } from '../characters/types'
-import { resolveEquipped } from '../items/registry'
-import { Rig } from '../rig/Rig'
+import { PixelSprite } from '../pixel/PixelSprite'
+import { wornItems } from '../state/inventory'
+import { loadoutOf, useWeevil } from '../state/store'
+import { InventoryGrid } from './InventoryGrid'
 import { SelectPanel } from './SelectPanel'
-import { SpeechBubble } from './SpeechBubble'
+import { ThoughtBubble } from './ThoughtBubble'
+import { WornColumn } from './WornColumn'
 
 interface SelectViewProps {
   character: CharacterDef
@@ -13,17 +16,21 @@ interface SelectViewProps {
 
 const FOCUSABLE = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
-/** Character-select overlay: blurred backdrop, character center stage, stats panel. */
+/** Character-select overlay: blurred backdrop, character center stage, stats and inventories. */
 export function SelectView({ character, onClose }: SelectViewProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const headingId = useId()
+  const worn = useWeevil((s) => loadoutOf(s.loadouts, character.id).worn)
+  const items = useMemo(() => wornItems({ skills: [], mcps: [], worn }), [worn])
 
   // Focus into the dialog, trap Tab, close on Escape, restore focus on exit.
+  // The shop and drag layer sit above this dialog and handle their own keys first.
   useEffect(() => {
     const returnTo = document.activeElement as HTMLElement | null
     dialogRef.current?.querySelector<HTMLElement>('[aria-label^="Close"]')?.focus()
 
     const onKey = (e: KeyboardEvent) => {
+      if (useWeevil.getState().shopOpen) return
       if (e.key === 'Escape') return onClose()
       if (e.key !== 'Tab' || !dialogRef.current) return
       const nodes = [...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)]
@@ -53,7 +60,6 @@ export function SelectView({ character, onClose }: SelectViewProps) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
-        onClick={onClose}
         data-testid="select-backdrop"
       />
       <div
@@ -61,27 +67,52 @@ export function SelectView({ character, onClose }: SelectViewProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={headingId}
-        className="pointer-events-none fixed inset-0 z-30 flex flex-col items-center justify-end gap-4 p-4 md:flex-row md:justify-center md:gap-16 md:p-10"
+        data-testid="select-dialog"
+        className="fixed inset-0 z-30 overflow-y-auto px-4 pt-24 pb-6 md:grid md:place-items-center md:py-10"
+        onClick={(e) => e.target === e.currentTarget && onClose()}
       >
-        <div className="flex flex-1 items-center justify-center md:flex-none">
+        <div className="mx-auto grid w-full max-w-md gap-5 md:w-auto md:max-w-none md:grid-cols-[auto_400px] md:items-center md:gap-x-12 md:gap-y-6">
+          <div className="flex items-center justify-center gap-6 md:gap-10">
+            <motion.div
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, transition: { duration: 0.12 } }}
+              transition={{ delay: 0.2 }}
+            >
+              <WornColumn characterId={character.id} />
+            </motion.div>
+            <motion.div
+              layoutId={`sprite-${character.id}`}
+              data-drop="character"
+              data-character={character.id}
+              className="relative aspect-[3/2] w-[168px] md:w-[300px]"
+              transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+            >
+              <PixelSprite sprite={character.sprite} mode="selected" worn={items} className="size-full" />
+              <ThoughtBubble name={character.name} />
+            </motion.div>
+          </div>
+
           <motion.div
-            layoutId={`sprite-${character.id}`}
-            className="pointer-events-auto relative aspect-[4/3] w-[180px] md:w-[300px]"
-            transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40, transition: { duration: 0.18 } }}
+            transition={{ type: 'spring', stiffness: 260, damping: 28, delay: 0.08 }}
           >
-            <Rig rig={character.rig} mode="selected" items={resolveEquipped(character.equipped)} className="size-full" />
-            <SpeechBubble name={character.name} />
+            <SelectPanel character={character} onClose={onClose} headingId={headingId} />
+          </motion.div>
+
+          <motion.div
+            className="flex flex-wrap justify-center gap-4 md:col-span-2 md:gap-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30, transition: { duration: 0.15 } }}
+            transition={{ type: 'spring', stiffness: 260, damping: 28, delay: 0.14 }}
+          >
+            <InventoryGrid characterId={character.id} kind="skill" />
+            <InventoryGrid characterId={character.id} kind="mcp" />
           </motion.div>
         </div>
-        <motion.div
-          className="pointer-events-auto max-h-[58vh] w-full max-w-md overflow-y-auto rounded-3xl md:max-h-none md:w-[400px] md:overflow-visible"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 40, transition: { duration: 0.18 } }}
-          transition={{ type: 'spring', stiffness: 260, damping: 28, delay: 0.08 }}
-        >
-          <SelectPanel character={character} onClose={onClose} headingId={headingId} />
-        </motion.div>
       </div>
     </>
   )

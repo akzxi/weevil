@@ -16,6 +16,15 @@
   --shadow: rgb(31 30 29 / 0.22);
   --slot: rgb(31 30 29 / 0.04);
   --slot-border: rgb(31 30 29 / 0.18);
+  --bubble: #fffdf8;
+  /* Minecraft inventory greys. */
+  --inv-bg: #c6c6c6;
+  --inv-hi: #ffffff;
+  --inv-lo: #555555;
+  --inv-slot: #8b8b8b;
+  --inv-slot-hi: #ffffff;
+  --inv-slot-lo: #373737;
+  --inv-ink: #3f3f3f;
   color-scheme: light;
 }
 
@@ -34,6 +43,14 @@
   --shadow: rgb(0 0 0 / 0.5);
   --slot: rgb(255 255 255 / 0.03);
   --slot-border: rgb(255 255 255 / 0.16);
+  --bubble: #232a42;
+  --inv-bg: #3b3b48;
+  --inv-hi: #5e5e70;
+  --inv-lo: #1c1c24;
+  --inv-slot: #26262f;
+  --inv-slot-hi: #4e4e5c;
+  --inv-slot-lo: #121217;
+  --inv-ink: #dcdce6;
   color-scheme: dark;
 }
 
@@ -50,6 +67,8 @@
   --color-shadow: var(--shadow);
   --color-slot: var(--slot);
   --color-slot-border: var(--slot-border);
+  --color-inv-ink: var(--inv-ink);
+  --font-pixel: 'Pixelify Sans', ui-monospace, monospace;
   --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -75,4 +94,58 @@ body {
     radial-gradient(ellipse at 50% 35%, var(--glow), transparent 65%),
     radial-gradient(var(--bg-dot) 1.2px, transparent 1.6px) 0 0 / 26px 26px,
     var(--bg);
+}
+
+/* Minecraft-style inventory pieces: bevelled panel, inset slot, raised button, tooltip. */
+.mc-panel {
+  background: var(--inv-bg);
+  box-shadow:
+    inset 3px 3px 0 var(--inv-hi),
+    inset -3px -3px 0 var(--inv-lo),
+    0 0 0 2px #000;
+  border-radius: 3px;
+}
+
+.mc-slot {
+  background: var(--inv-slot);
+  box-shadow:
+    inset 2px 2px 0 var(--inv-slot-lo),
+    inset -2px -2px 0 var(--inv-slot-hi);
+}
+
+.mc-button {
+  color: var(--inv-ink);
+  background: var(--inv-bg);
+  box-shadow:
+    inset 2px 2px 0 var(--inv-hi),
+    inset -2px -2px 0 var(--inv-lo),
+    0 0 0 2px #000;
+  border-radius: 2px;
+}
+.mc-button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.mc-button:active:not(:disabled) {
+  box-shadow:
+    inset 2px 2px 0 var(--inv-lo),
+    inset -2px -2px 0 var(--inv-hi),
+    0 0 0 2px #000;
+}
+.mc-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.mc-tooltip {
+  font-family: var(--font-pixel);
+  background: rgb(16 0 16 / 0.94);
+  border: 2px solid #2a0a5e;
+  outline: 2px solid rgb(16 0 16 / 0.94);
+  padding: 4px 8px;
+}
+
+/* Item drop target under the dragged item. */
+[data-drop-active] {
+  outline: 3px dashed var(--accent);
+  outline-offset: 4px;
 }

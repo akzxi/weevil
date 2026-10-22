@@ -1,24 +1,19 @@
-import type { RigDef } from '../rig/types'
+import type { SpriteDef } from '../pixel/PixelSprite'
+import type { Loadout } from '../state/inventory'
 import type { Point } from '../world/wander'
 
 export type StatKey = 'reasoning' | 'code' | 'speed' | 'context' | 'cost'
-
-export interface SlotDef {
-  kind: 'skill' | 'mcp'
-}
 
 export interface CharacterDef {
   id: string
   name: string
   company: string
   model: string
-  palette: { primary: string; ink: string }
-  rig: RigDef
+  sprite: SpriteDef
   /** 0–100. For `cost`, higher means pricier. */
   stats: Record<StatKey, number>
-  slots: SlotDef[]
-  /** Item id per slot index, or null for an empty slot. Same length as `slots`. */
-  equipped: (string | null)[]
+  /** Loadout before the player changes anything. */
+  starter: Loadout
   /** Where the character first appears, as a fraction of the roamable area. */
   spawn: Point
 }

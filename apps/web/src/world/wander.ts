@@ -19,8 +19,10 @@ export interface Bounds {
 
 export interface WanderConfig {
   size: { width: number; height: number }
-  /** Walk speed in px/s. */
-  speed: number
+  /** Pixels per hop: sprites march in whole steps, Space Invaders style. */
+  stepSize: number
+  /** Hops per second. */
+  stepRate: number
   /** Idle pause range in seconds [min, max]. */
   idle: [number, number]
   /** Seconds the landing squash lasts after a drop. */
@@ -37,6 +39,10 @@ export interface WanderState extends Point {
   timer: number
   /** Pointer position relative to the sprite while held. */
   grabOffset: Point
+  /** Seconds until the next hop while walking. */
+  stepTimer: number
+  /** Hops taken so far; its parity picks the walk frame so legs move with each hop. */
+  step: number
 }
 
 export type Rng = () => number
@@ -65,6 +71,8 @@ export function createWanderState(spawn: Point, b: Bounds, c: WanderConfig): Wan
     target: null,
     timer: c.idle[0],
     grabOffset: { x: 0, y: 0 },
+    stepTimer: 0,
+    step: 0,
   }
 }
 
@@ -82,19 +90,24 @@ export function step(s: WanderState, dt: number, b: Bounds, c: WanderConfig, rng
         return { ...cur, mode: 'idle', timer: idleFor(c, rng) }
       }
       const target = { x: rng() * maxX(b, c), y: rng() * maxY(b, c) }
-      return { ...cur, mode: 'walk', target, timer: 0, facing: target.x < cur.x ? -1 : 1 }
+      return { ...cur, mode: 'walk', target, timer: 0, stepTimer: 0, facing: target.x < cur.x ? -1 : 1 }
     }
     case 'walk': {
       const target = cur.target ? clampInto(cur.target, b, c) : cur
+      if (!c.canWalk) return { ...cur, mode: 'idle', target: null, timer: idleFor(c, rng) }
+      const stepTimer = cur.stepTimer - dt
+      if (stepTimer > 0) return { ...cur, target, stepTimer }
       const dx = target.x - cur.x
       const dy = target.y - cur.y
       const dist = Math.hypot(dx, dy)
-      const travel = c.speed * dt
-      if (!c.canWalk || dist <= travel) {
-        return { ...cur, x: target.x, y: target.y, mode: 'idle', target: null, timer: idleFor(c, rng) }
+      const step = cur.step + 1
+      if (dist <= c.stepSize) {
+        return { ...cur, x: target.x, y: target.y, mode: 'idle', target: null, timer: idleFor(c, rng), step }
       }
       const facing: Facing = dx === 0 ? cur.facing : dx < 0 ? -1 : 1
-      return { ...cur, x: cur.x + (dx / dist) * travel, y: cur.y + (dy / dist) * travel, target, facing }
+      const x = Math.round(cur.x + (dx / dist) * c.stepSize)
+      const y = Math.round(cur.y + (dy / dist) * c.stepSize)
+      return { ...cur, x, y, target, facing, step, stepTimer: stepTimer + 1 / c.stepRate }
     }
   }
 }

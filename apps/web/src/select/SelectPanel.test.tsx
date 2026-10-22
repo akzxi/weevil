@@ -25,16 +25,6 @@ describe('SelectPanel', () => {
     expect(screen.getByRole('meter', { name: 'Reasoning' })).toHaveAttribute('aria-valuenow', '95')
   })
 
-  it('shows every slot, with the equipped item and empties labelled', () => {
-    render(<SelectPanel character={clawd} onClose={() => {}} />)
-    const slots = screen.getAllByTestId('item-slot')
-    expect(slots).toHaveLength(4)
-    expect(slots[0]).toHaveTextContent('Frontend Design')
-    expect(slots[0]).toHaveTextContent('Skill')
-    expect(slots.slice(1).every((s) => s.textContent?.includes('Empty'))).toBe(true)
-    expect(slots[3]).toHaveTextContent('MCP')
-  })
-
   it('closes from the close button', async () => {
     const onClose = vi.fn()
     render(<SelectPanel character={clawd} onClose={onClose} />)

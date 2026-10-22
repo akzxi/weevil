@@ -7,7 +7,7 @@
   },
   "overrides": [
     {
-      "files": ["src/characters/**", "src/items/**"],
+      "files": ["src/characters/**", "src/items/**", "src/pixel/**"],
       "rules": { "react/only-export-components": "off" }
     }
   ]

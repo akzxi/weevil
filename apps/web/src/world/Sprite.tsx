@@ -1,13 +1,15 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import type { CharacterDef } from '../characters/types'
-import { resolveEquipped } from '../items/registry'
-import { Rig } from '../rig/Rig'
+import { PixelSprite } from '../pixel/PixelSprite'
+import { wornItems } from '../state/inventory'
+import { loadoutOf, useWeevil } from '../state/store'
 import { applyEntry, viewportBounds, type SpriteRegistry } from './useWanderLoop'
 import { createWanderState, grab, isDrag, moveHeld, release, type Facing, type WanderMode } from './wander'
 
+// 24×16 sprite pixels at 4px each.
 const WIDTH = 96
-const HEIGHT = 72
+const HEIGHT = 64
 
 interface SpriteProps {
   character: CharacterDef
@@ -20,15 +22,18 @@ export function Sprite({ character, registry, selected, onSelect }: SpriteProps)
   const ref = useRef<HTMLButtonElement>(null)
   const [mode, setMode] = useState<WanderMode>('idle')
   const [facing, setFacing] = useState<Facing>(1)
+  const [step, setStep] = useState(0)
   const reduceMotion = useReducedMotion()
   const press = useRef<{ x: number; y: number; dragging: boolean } | null>(null)
   const justDragged = useRef(false)
-  const items = useMemo(() => resolveEquipped(character.equipped), [character.equipped])
+  const worn = useWeevil((s) => loadoutOf(s.loadouts, character.id).worn)
+  const items = useMemo(() => wornItems({ skills: [], mcps: [], worn }), [worn])
 
   useLayoutEffect(() => {
     const config = {
       size: { width: WIDTH, height: HEIGHT },
-      speed: 70,
+      stepSize: 8,
+      stepRate: 6,
       idle: [1.2, 3.5] as [number, number],
       landDuration: 0.45,
       canWalk: !reduceMotion,
@@ -43,8 +48,9 @@ export function Sprite({ character, registry, selected, onSelect }: SpriteProps)
       state: createWanderState(character.spawn, viewportBounds(), config),
       config,
       paused: false,
-      reported: { mode: 'idle' as WanderMode, facing: 1 as Facing },
-      onChange: (m: WanderMode, f: Facing) => {
+      reported: { mode: 'idle' as WanderMode, facing: 1 as Facing, step: 0 },
+      onChange: (m: WanderMode, f: Facing, n: number) => {
+        setStep(n)
         setMode(m)
         setFacing(f)
       },
@@ -109,6 +115,8 @@ export function Sprite({ character, registry, selected, onSelect }: SpriteProps)
       ref={ref}
       type="button"
       data-testid={`sprite-${character.id}`}
+      data-drop="character"
+      data-character={character.id}
       data-mode={mode}
       aria-label={`${character.name}, ${character.company}. Select to view, or drag to move.`}
       className={`absolute top-0 left-0 touch-none select-none focus-visible:outline-none [&:focus-visible_.focus-ring]:opacity-100 ${
@@ -139,7 +147,7 @@ export function Sprite({ character, registry, selected, onSelect }: SpriteProps)
             transition={{ type: 'spring', stiffness: 500, damping: held ? 20 : 12 }}
           >
             <div className="size-full" style={{ transform: facing < 0 ? 'scaleX(-1)' : undefined }}>
-              <Rig rig={character.rig} mode={mode} items={items} className="size-full" />
+              <PixelSprite sprite={character.sprite} mode={mode} step={step} worn={items} className="size-full" />
             </div>
           </motion.div>
         </motion.div>

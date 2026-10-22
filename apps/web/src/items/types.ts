@@ -1,19 +1,22 @@
-import type { ComponentType } from 'react'
-import type { SocketName } from '../rig/types'
+import type { PixelArt } from '../pixel/PixelArt'
 
-export type ItemKind = 'skill' | 'mcp' | 'cosmetic'
+export type ItemKind = 'skill' | 'mcp'
+
+/** Where a worn item is drawn on a character. Order = worn column order. */
+export const SOCKETS = ['head', 'hand', 'back', 'feet'] as const
+export type Socket = (typeof SOCKETS)[number]
 
 /**
- * An equippable item. The visual half renders on a rig socket; the capability
- * half is what the agent backend will load when the item is equipped (M3).
+ * An equippable item. The visual half is an 8×8 pixel icon worn on a socket;
+ * the capability half is what the agent backend will load when equipped (M3).
  */
 export interface ItemDef {
   id: string
   name: string
   kind: ItemKind
+  /** Shown in the shop and tooltips; keep it under ~60 chars. */
   description: string
-  socket: SocketName
-  /** Drawn in rig units around the socket origin (0,0). */
-  Art: ComponentType
-  capability?: { type: 'skill' | 'mcp'; ref: string }
+  socket: Socket
+  icon: PixelArt
+  capability: { type: ItemKind; ref: string }
 }
