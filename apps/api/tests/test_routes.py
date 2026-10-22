@@ -117,3 +117,22 @@ async def test_message_text_is_validated(client, provider):
     assert (await client.post(url, json={"text": "x" * 32_001})).status_code == 422
     missing = "/api/conversations/00000000-0000-0000-0000-000000000000/messages"
     assert (await client.post(missing, json={"text": "hi"})).status_code == 404
+
+
+async def test_unexpected_provider_failures_become_an_error_event(client, provider):
+    class Exploding:
+        async def stream(self, character, history):
+            yield TextDelta("partial")
+            raise TypeError("Could not resolve authentication method.")
+
+    from weevil_api.main import app
+    from weevil_api.routes.chat import get_providers
+
+    app.dependency_overrides[get_providers] = lambda: {"anthropic": Exploding()}
+    conv = await new_conversation(client)
+    body = (await client.post(f"/api/conversations/{conv['id']}/messages", json={"text": "hi"})).text
+    name, data = sse_events(body)[-1]
+    assert name == "error" and data["kind"] == "api"
+    assert "API" in data["message"]
+    roles = [m["role"] for m in (await client.get(f"/api/conversations/{conv['id']}/messages")).json()]
+    assert roles == ["user"]

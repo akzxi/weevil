@@ -1,4 +1,5 @@
 import json
+import logging
 import uuid
 from collections.abc import AsyncIterator
 from functools import cache
@@ -18,9 +19,14 @@ from weevil_api.providers.base import ChatProvider, Done, ProviderError, TextDel
 from weevil_api.routes.conversations import Session, conversation_messages, get_conversation, message_out
 
 router = APIRouter(prefix="/api")
+log = logging.getLogger(__name__)
 
 MAX_MESSAGE_CHARS = 32_000
 TITLE_CHARS = 60
+UNEXPECTED = (
+    "Something went wrong talking to the model. Check the API terminal for details "
+    "(a missing ANTHROPIC_API_KEY in apps/api/.env is the usual cause)."
+)
 
 
 @cache
@@ -83,17 +89,24 @@ async def send_message(
     async def events() -> AsyncIterator[str]:
         yield sse("user", {"message": user_out})
         # If the client disconnects, this generator is cancelled before Done: no partial reply is saved.
-        async for event in provider.stream(character, history):
-            match event:
-                case ThinkingDelta(text=text):
-                    yield sse("thinking", {"text": text})
-                case TextDelta(text=text):
-                    yield sse("text", {"text": text})
-                case ProviderError(kind=kind, message=message):
-                    yield sse("error", {"kind": kind, "message": message})
-                    return
-                case Done():
-                    yield sse("done", {"message": await save_reply(conversation_id, event), "title": title})
+        try:
+            async for event in provider.stream(character, history):
+                match event:
+                    case ThinkingDelta(text=text):
+                        yield sse("thinking", {"text": text})
+                    case TextDelta(text=text):
+                        yield sse("text", {"text": text})
+                    case ProviderError(kind=kind, message=message):
+                        yield sse("error", {"kind": kind, "message": message})
+                        return
+                    case Done():
+                        reply = await save_reply(conversation_id, event)
+                        yield sse("done", {"message": reply, "title": title})
+        except Exception:
+            # Headers are already sent, so report it in-stream rather than as a 500. Includes the SDK's
+            # "Could not resolve authentication method" TypeError when no API key is configured.
+            log.exception("Chat stream failed for conversation %s", conversation_id)
+            yield sse("error", {"kind": "api", "message": UNEXPECTED})
 
     return EventSourceResponse(events())
 

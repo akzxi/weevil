@@ -1,8 +1,16 @@
+import logging
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from weevil_api.config import settings
 from weevil_api.routes import chat, conversations
+
+if settings.anthropic_api_key is None and "ANTHROPIC_API_KEY" not in os.environ:
+    logging.getLogger("weevil_api").warning(
+        "No ANTHROPIC_API_KEY configured: copy apps/api/.env.example to apps/api/.env and add your key."
+    )
 
 app = FastAPI(title="weevil API")
 app.add_middleware(
