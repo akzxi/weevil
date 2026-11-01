@@ -21,9 +21,13 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <main className="world fixed inset-0 overflow-hidden font-sans text-ink">
-        <header className="pointer-events-none absolute inset-x-0 top-0 z-10 p-5 md:p-7">
-          <h1 className="font-display text-3xl font-bold tracking-tight">weevil</h1>
-          <p className="text-sm text-ink-muted">a little world of AI models</p>
+        <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-3 p-5 md:gap-4 md:p-7">
+          <img src="/weevil-logo.png" alt="" className="h-12 w-auto md:h-20" />
+          <div>
+            <h1 className="font-display text-3xl font-bold tracking-tight">weevil</h1>
+            {/* Phones have no room beside the Shop button for the tagline. */}
+            <p className="hidden text-sm text-ink-muted sm:block">a little world of AI models</p>
+          </div>
         </header>
 
         {/* Above the select overlay so the shop and theme stay reachable from both screens. */}
