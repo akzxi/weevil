@@ -24,3 +24,4 @@ Animated AI-model sprites roam the screen; clicking one zooms it into a characte
 - Respect `prefers-reduced-motion`.
 - Pure logic is unit-tested with Vitest; visuals and drag flows are checked with Playwright in `apps/web/e2e`. Chat e2e tests use the in-memory mock in `e2e/mockApi.ts` — never call a real model from tests.
 - API tests (pytest) run against the `weevil_test` database with fake providers.
+- Each major stage adds `docs/learning/NN-<stage>.md` (see `docs/learning/README.md`): explain every new/changed backend file and its code as an annotated walkthrough (Python and library concepts explained, code copied from source); frontend gets a short recap; add new terms to `glossary.md` and list the doc in the README.
